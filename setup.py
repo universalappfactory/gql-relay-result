@@ -11,7 +11,7 @@ setup(
       description="Pageable resultset for gql queries",
       long_description=long_description,
       long_description_content_type="text/markdown",
-      version='0.0.1',
+      version='0.0.0',
       packages=find_packages(exclude=['tests', 'tests.*']),
       install_requires=[
         'gql>=3.0.0a4',
