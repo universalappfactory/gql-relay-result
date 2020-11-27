@@ -78,3 +78,11 @@ for x in result:
     self.assertIsInstance(x, Data)
 
 ````
+
+# Querying child result sets
+
+If your resulting data has child items which can be paged as well you may use the 'SubResult' class to query all remaining children
+if you need the complete data at once.
+
+Just have a look at the 'test_that_resolve_nested_items_works' UnitTest there is an examplte to get an idea how it works.
+
