@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import asyncio
-
+import traceback
 PAGEINFO_TOKEN = "pageInfo"
 STARTCURSOR_TOKEN = "startCursor"
 ENDCURSOR_TOKEN = "endCursor"
@@ -115,8 +115,8 @@ class IterableResult:
         try:
             result = await self._executor(self._query, params)
             self._parse_result(result)
-        except Exception as x:
-            print(x)
+        except Exception:
+            traceback.print_exc() 
             raise StopAsyncIteration
 
     async def next(self):
@@ -160,16 +160,27 @@ class GqlRelayResult(IterableResult):
         try:
             result = await self._executor(self._query, params)
             self._parse_result(result)
-        except Exception as x:
-            print(x)
+        except Exception:
+            traceback.print_exc()
             raise StopAsyncIteration
 
 class SubResult(IterableResult):
-    
-    def __init__(self, result, resolver, params, factory=None, is_async_factory=False) -> None:
+        
+    def __init__(self, result, resolver, params, factory=None, is_async_factory=False, resolver_returns_complete_objects=False) -> None:
+        """Create a new instance
+
+        Keyword arguments:
+        result -- contains the raw result
+        resolver -- contains a resolver method to fetch all missing items
+        params -- this params will be passed to the resolver method by dictionary unpacking
+        factory -- a factory method to create objects from the raw result
+        is_async_factory -- set this to true if the factory method is async
+        resolver_returns_complete_objects -- if the resolver already returns a complete list of objects created by a factory method you can set this to true in order to prevent object create by the factory again
+        """
         super(SubResult, self).__init__(result, factory, is_async_factory)
         self._params = params
         self._resolver = resolver
+        self._resolver_returns_complete_objects = resolver_returns_complete_objects
 
     async def _fetch_next_chunk(self):
         after = self._pageInfo.end_cursor
@@ -181,18 +192,21 @@ class SubResult(IterableResult):
             items = await self._resolver(**p)
             self._data = DataFactory.from_list(items)
             self._pageInfo = PageInfo.empty()
-        except Exception as x:
-            print(x)
+
+            if self._resolver_returns_complete_objects:
+                self._factory = None 
+        except Exception:
+            traceback.print_exc()
             raise StopAsyncIteration
 
     @staticmethod
-    async def get_all_children_from_node(dict, node_name, params, resolver_method, factory_method):
+    async def get_all_children_from_node(dict, node_name, params, resolver_method, factory_method, is_async_factory=False , resolver_returns_complete_objects=False):
         children = []
         if node_name in dict:
             x = {
                 node_name: dict.pop(node_name)
             }
-            return await IterableResult.fetch_all(SubResult(x, resolver_method, params, factory_method))
+            return await IterableResult.fetch_all(SubResult(x, resolver_method, params, factory_method, is_async_factory, resolver_returns_complete_objects))
         
         return children
 

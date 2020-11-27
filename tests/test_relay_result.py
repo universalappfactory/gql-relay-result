@@ -50,7 +50,7 @@ class DataWithId:
         result = GqlRelayResultTests.SINGLE_PAGE_RESULT
 
         params = {'id': id, 'after': after}
-        return await IterableResult.fetch_all(GqlRelayResult(result, gqlQuery, params, executor))
+        return await IterableResult.fetch_all(GqlRelayResult(result, gqlQuery, params, executor, lambda x: Data.create(x)))
 
     @classmethod
     async def create(cls, dict):
@@ -59,7 +59,8 @@ class DataWithId:
         # all these values will be passed into the 'get_all_children' method
         # and additionally the 'after' cursor which comes from the 'subElementsSet' pageInfo
         get_children_params = {"id": node["id"]}
-        children = await SubResult.get_all_children_from_node(node, "subElementsSet", get_children_params, DataWithId.get_all_children, lambda x: Data.create(x))
+        children = await SubResult.get_all_children_from_node(node, "subElementsSet", get_children_params, DataWithId.get_all_children, lambda x: Data.create(x), False, True)
+        
         return DataWithId(children=children, **node)
 
 
@@ -88,8 +89,14 @@ class GqlRelayResultTests(IsolatedAsyncioTestCase):
                 {
                     "node": {
                         "value": 1
-                    }
-                }                    
+                    },
+                    
+                },
+                {
+                    "node": {
+                        "value": 2
+                    },
+                },                   
             ],
             "pageInfo": {
                 "startCursor": "YXJyYXljb25uZWN0aW9uOjA=",
@@ -247,7 +254,7 @@ class GqlRelayResultTests(IsolatedAsyncioTestCase):
         params = {'first': 5}
         sut = GqlRelayResult(result, gqlQuery, params, executor)
         
-        expeced = [1]
+        expeced = [1, 2]
         actual = []
         async for x in sut:
             actual.append(x["node"]["value"])
@@ -335,4 +342,4 @@ class GqlRelayResultTests(IsolatedAsyncioTestCase):
 
         itemWithChildren = actual[2]
         self.assertListEqual(expeced, actual)
-        self.assertEqual(len(itemWithChildren.children), 3)
+        self.assertEqual(len(itemWithChildren.children), 4)
