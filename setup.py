@@ -11,7 +11,7 @@ setup(
       description="Pageable resultset for gql queries",
       long_description=long_description,
       long_description_content_type="text/markdown",
-      version='0.0.5',
+      version='0.0.6',
       url="https://github.com/universalappfactory/gql-relay-result",
       packages=find_packages(exclude=['tests', 'tests.*']),
       install_requires=[
