@@ -343,3 +343,36 @@ class GqlRelayResultTests(IsolatedAsyncioTestCase):
         itemWithChildren = actual[2]
         self.assertListEqual(expeced, actual)
         self.assertEqual(len(itemWithChildren.children), 4)
+
+
+    async def test_that_current_all_from_current_page_iterates_through_expected_page(self):
+        gqlQuery = gql(GqlRelayResultTests.QUERY)
+        executor = AsyncMock()
+        result = GqlRelayResultTests.FIRST_PAGE_RESULT
+        executor.return_value = GqlRelayResultTests.SECOND_PAGE_RESULT
+
+        params = {'first': 5}
+        sut = GqlRelayResult(result, gqlQuery, params, executor)
+        
+        expeced = [1, 2, 3, 4, 5]
+        actual = []
+        for x in sut.all_from_current_page():
+            actual.append(x["node"]["value"])
+
+        self.assertListEqual(expeced, actual)
+
+    async def test_that_current_all_from_current_page_async_iterates_through_expected_page(self):
+        gqlQuery = gql(GqlRelayResultTests.QUERY)
+        executor = AsyncMock()
+        result = GqlRelayResultTests.FIRST_PAGE_RESULT
+        executor.return_value = GqlRelayResultTests.SECOND_PAGE_RESULT
+
+        params = {'first': 5}
+        sut = GqlRelayResult(result, gqlQuery, params, executor)
+        
+        expeced = [1, 2, 3, 4, 5]
+        actual = []
+        for x in await sut.all_from_current_page_async():
+            actual.append(x["node"]["value"])
+
+        self.assertListEqual(expeced, actual)

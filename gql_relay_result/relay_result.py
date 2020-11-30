@@ -164,6 +164,28 @@ class GqlRelayResult(IterableResult):
             traceback.print_exc()
             raise StopAsyncIteration
 
+    """
+    returns all items from current page while the items are created by a synchronous factory method
+    """
+    def all_from_current_page(self) -> list:
+        result = []
+        for index in range(len(self._data)):
+            result.append(self._create_item(index))
+        
+        return result
+
+    """
+    returns all items from current page while the items are created by a async factory method
+    """
+    async def all_from_current_page_async(self) -> list:
+        result = []
+        for index in range(len(self._data)):
+            item = await self._create_item_async(index)
+            result.append(item)
+        
+        return result
+
+
 class SubResult(IterableResult):
         
     def __init__(self, result, resolver, params, factory=None, is_async_factory=False, resolver_returns_complete_objects=False) -> None:
